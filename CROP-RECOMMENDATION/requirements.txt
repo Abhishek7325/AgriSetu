@@ -1,13 +1,21 @@
+# Build tools (help pip resolve modern packages)
 pip>=23.2
-setuptools>=68.0
+setuptools>=70.0
 wheel
-numpy>=1.25.0
 
-numpy==1.25.2
+# Numpy compatible with Python 3.13 (HAS prebuilt wheels)
+numpy==2.3.5
+
+# Data processing
+pandas==2.2.2
+scikit-learn==1.4.2
+
+# Visualization
+matplotlib==3.8.4
+seaborn==0.13.2
+
+# Streamlit (update to supported version)
+streamlit==1.32.0
+
+# Other dependencies
 pickle-mixin==1.0.2
-streamlit==1.23.1
-seaborn==0.10.1
-pandas==2.0.2
-matplotlib==3.7.1
-scikit_learn==1.2.2
-
