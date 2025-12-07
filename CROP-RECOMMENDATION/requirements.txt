@@ -1,9 +1,9 @@
-# pinned to work on Python 3.11 in Streamlit Cloud
+# Use Python 3.11 (see runtime.txt) — these package versions have prebuilt wheels for 3.11
 pip>=23.2
 setuptools>=70.0
 wheel
 
-# Core
+# Core numerical/data packages
 numpy==1.25.2
 pandas==2.2.3
 
