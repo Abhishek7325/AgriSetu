@@ -1,24 +1,22 @@
-# Build tools (help pip pick wheels)
+# pinned to work on Python 3.11 in Streamlit Cloud
 pip>=23.2
 setuptools>=70.0
 wheel
 
-# Core numerical
-numpy==2.3.5
-
-# Data handling — use a pandas release with wheels for Python 3.13
+# Core
+numpy==1.25.2
 pandas==2.2.3
 
-# Machine learning / utilities
-scikit-learn==1.4.2
+# ML / utils
+scikit-learn==1.2.2
+requests
 
-# Visualization
-matplotlib==3.8.4
+# Visualization / UI
+matplotlib==3.7.1
 seaborn==0.13.2
 
 # Streamlit
 streamlit==1.32.0
 
-# Other small deps (add only what you need)
+# small helper
 pickle-mixin==1.0.2
-requests
