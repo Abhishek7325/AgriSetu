@@ -1,0 +1,10 @@
+# minimal test set — get the app to build first
+pip>=23.2
+setuptools>=70.0
+wheel
+
+# core
+numpy==1.25.2
+
+# UI
+streamlit==1.32.0
