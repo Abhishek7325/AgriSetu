@@ -1,10 +1,14 @@
-# minimal test set — get the app to build first
 pip>=23.2
 setuptools>=70.0
 wheel
 
-# core
 numpy==1.25.2
+pandas==2.2.3
+scikit-learn==1.2.2
+matplotlib==3.7.1
+seaborn==0.13.2
 
-# UI
 streamlit==1.32.0
+
+requests
+pickle-mixin==1.0.2
