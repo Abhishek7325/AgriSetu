@@ -5,6 +5,8 @@ seaborn
 pandas
 matplotlib
 scikit_learn
-tensorflow
-keras
+tensorflow==2.15
+keras==3.0.0
+
 opencv_python_headless
+
