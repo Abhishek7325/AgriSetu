@@ -137,3 +137,43 @@ elif app_mode == "DISEASE RECOGNITION":
                         st.success(f"Model predicts: **{class_name[result_index]}**")
                     else:
                         st.error(f"Prediction index out of range: {result_index}")
+
+from pathlib import Path
+import re
+
+# LOAD DISEASE GUIDE -----
+BASE_PATH = Path(__file__).resolve().parent
+
+# Try to find DISEASE-GUIDE.md in both root and subfolder
+possible_paths = [
+    BASE_PATH / "DISEASE-GUIDE.md",
+    BASE_PATH.parent / "DISEASE-GUIDE.md",
+    BASE_PATH / "PLANT-DISEASE-IDENTIFICATION" / "DISEASE-GUIDE.md",
+]
+
+disease_guide_path = None
+for p in possible_paths:
+    if p.exists():
+        disease_guide_path = p
+        break
+
+disease_info = {}
+
+if disease_guide_path:
+    text = disease_guide_path.read_text(encoding="utf-8")
+    current = None
+    buf = []
+    for line in text.splitlines():
+        if line.startswith("###"):   # disease heading
+            if current:
+                disease_info[current] = "\n".join(buf).strip()
+            current = line.replace("###", "").strip()
+            buf = []
+        else:
+            if current:
+                buf.append(line)
+    if current:
+        disease_info[current] = "\n".join(buf).strip()
+else:
+    print("❌ DISEASE-GUIDE.md not found!")
+
