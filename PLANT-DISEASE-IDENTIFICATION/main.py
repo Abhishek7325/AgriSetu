@@ -1,6 +1,9 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+from PIL import Image
+from pathlib import Path
+
 def model_prediction(test_image):
     model = tf.keras.models.load_model("trained_plant_disease_model.keras")
     image = tf.keras.preprocessing.image.load_img(test_image,target_size=(128,128))
@@ -14,9 +17,16 @@ st.sidebar.title("AgriSens")
 app_mode = st.sidebar.selectbox("Select Page",["HOME","DISEASE RECOGNITION"])
 #app_mode = st.sidebar.selectbox("Select Page",["Home","About","Disease Recognition"])
 
-# import Image from pillow to open images
-from PIL import Image
-img = Image.open("Diseases.png")
+
+BASE_DIR = Path(__file__).resolve().parent   # folder where main.py is located
+IMG_PATH = BASE_DIR / "Diseases.png"         # image must be in same folder
+
+# optional safety check
+if not IMG_PATH.exists():
+    print("❌ ERROR: Not found:", IMG_PATH)
+
+img = Image.open(IMG_PATH)
+
 
 # display image using streamlit
 # width is used to set the width of an image
@@ -52,4 +62,7 @@ elif(app_mode=="DISEASE RECOGNITION"):
                     'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 
                     'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
                       'Tomato___healthy']
+
         st.success("Model is Predicting it's a {}".format(class_name[result_index]))
+
+
