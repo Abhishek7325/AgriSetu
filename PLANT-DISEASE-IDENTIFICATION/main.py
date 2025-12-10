@@ -177,3 +177,17 @@ if disease_guide_path:
 else:
     print("❌ DISEASE-GUIDE.md not found!")
 
+predicted = predicted_class  # model output
+
+# Try to fetch description
+description = disease_info.get(predicted)
+
+import streamlit as st
+
+if description:
+    with st.expander(f"About {predicted}"):
+        st.markdown(description)
+else:
+    st.warning("No description found for this disease.")
+
+
