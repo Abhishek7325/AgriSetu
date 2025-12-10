@@ -1,6 +1,7 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+import re
 from PIL import Image
 from pathlib import Path
 
@@ -14,60 +15,73 @@ IMG_PATH = BASE_DIR / "Diseases.png"
 def load_model(path: str):
     return tf.keras.models.load_model(str(path), compile=False)
 
-# --- Load disease guide (optional) ---
+
+# =====================================================
+#     ROBUST DISEASE-GUIDE.md LOADING AND MATCHING
+# =====================================================
+
+# Function to normalize label (remove punctuation, spaces, underscores, lowercase)
+def normalize_label(text):
+    text = text.lower()
+    text = re.sub(r'[_\s(),\-]+', '', text)        # remove spaces, underscores, punctuation
+    text = re.sub(r'[^a-z0-9]', '', text)          # keep alphanumeric only
+    return text
+
 disease_info = {}
 md_candidates = [
     BASE_DIR / "DISEASE-GUIDE.md",
     BASE_DIR / "PLANT-DISEASE-IDENTIFICATION" / "DISEASE-GUIDE.md",
     BASE_DIR.parent / "DISEASE-GUIDE.md",
 ]
+
 md_path = next((p for p in md_candidates if p.exists()), None)
+
 if md_path:
     text = md_path.read_text(encoding="utf-8")
-    cur = None
-    buf = []
-    for line in text.splitlines():
-        if line.strip().startswith("###"):
-            if cur:
-                disease_info[cur] = {"description": "\n".join(buf).strip()}
-            cur = line.strip().lstrip("#").strip()
-            buf = []
-        else:
-            if cur is not None:
-                buf.append(line)
-    if cur:
-        disease_info[cur] = {"description": "\n".join(buf).strip()}
 
-# --- Sidebar ---
+    # Regex to remove numbering like "21." in headings
+    header_re = re.compile(r'^\s*#{2,}\s*(?:\d+\.\s*)?(.*)$', flags=re.MULTILINE)
+
+    parts = header_re.split(text)
+    # parts = ["before", heading1, text1, heading2, text2, ...]
+
+    it = iter(parts[1:])   # skip "before"
+    for heading, content in zip(it, it):
+        heading = heading.strip()
+        content = content.strip()
+        disease_info[heading] = {"description": content}
+
+# Build a normalized lookup index
+normalized_index = { normalize_label(k): k for k in disease_info.keys() }
+
+
+# =====================================================
+#           STREAMLIT APP USER INTERFACE
+# =====================================================
+
 st.sidebar.title("AgriSens")
 app_mode = st.sidebar.selectbox("Select Page", ["HOME", "DISEASE RECOGNITION"])
 
-# --- Show header image ---
+# Show header image
 if IMG_PATH.exists():
     img = Image.open(IMG_PATH)
     st.image(img, use_column_width=True)
 else:
     st.write("Header image not found at:", IMG_PATH)
 
+
 # --- Model prediction function ---
 def model_prediction(test_image):
-    """
-    test_image: either a file-like object (UploadedFile) or path-like string
-    returns: integer index or None on failure
-    """
     if not MODEL_PATH.exists():
         st.error(f"Model file not found at: {MODEL_PATH}")
         return None
 
-    # load (cached)
     model = load_model(MODEL_PATH)
 
-    # if user didn't upload a file
     if not test_image:
         st.warning("Please upload an image first.")
         return None
 
-    # preprocess and predict
     try:
         image = tf.keras.preprocessing.image.load_img(test_image, target_size=(128, 128))
         input_arr = tf.keras.preprocessing.image.img_to_array(image)
@@ -78,26 +92,33 @@ def model_prediction(test_image):
         st.error(f"Error during prediction: {e}")
         return None
 
-# --- Main app pages ---
+
+# =====================================================
+#                     HOME PAGE
+# =====================================================
+
 if app_mode == "HOME":
     st.markdown("<h1 style='text-align: center;'>SMART DISEASE DETECTION</h1>", unsafe_allow_html=True)
     st.write("Upload leaf images in the Disease Recognition page to get predictions.")
+
+
+# =====================================================
+#              DISEASE RECOGNITION PAGE
+# =====================================================
 
 elif app_mode == "DISEASE RECOGNITION":
     st.header("DISEASE RECOGNITION")
 
     test_image = st.file_uploader("Choose an Image:", type=["png", "jpg", "jpeg"])
 
-    # Preview uploaded image
+    # Preview
     if test_image is not None:
         try:
             st.image(test_image, caption="Uploaded image", use_column_width=True)
-        except Exception:
-            # sometimes UploadedFile is a buffer; reopen via PIL
+        except:
             img_preview = Image.open(test_image)
             st.image(img_preview, caption="Uploaded image", use_column_width=True)
 
-    # Predict button
     if st.button("Predict"):
         with st.spinner("Running model..."):
             result_index = model_prediction(test_image)
@@ -105,7 +126,7 @@ elif app_mode == "DISEASE RECOGNITION":
         if result_index is None:
             st.error("Prediction failed or no model available.")
         else:
-            # class names list (keep same order as training)
+            # All class labels
             class_name = [
                 'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
                 'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew',
@@ -126,10 +147,27 @@ elif app_mode == "DISEASE RECOGNITION":
             predicted_label = class_name[result_index]
             st.success(f"Model predicts: **{predicted_label}**")
 
-            # show description (if available)
-            info = disease_info.get(predicted_label)
-            if info:
+            # ===============================
+            #    SMART DESCRIPTION MATCHING
+            # ===============================
+            norm = normalize_label(predicted_label)
+            matched_key = normalized_index.get(norm)
+
+            if matched_key:       # exact normalized match
+                info = disease_info[matched_key]
                 with st.expander(f"About {predicted_label}"):
                     st.markdown(info.get("description", "No description available."))
             else:
-                st.info("No detailed description found for this label.")
+                # secondary fuzzy match (optional)
+                found = None
+                for k in disease_info.keys():
+                    if normalize_label(k).find(norm) != -1 or norm.find(normalize_label(k)) != -1:
+                        found = k
+                        break
+
+                if found:
+                    info = disease_info[found]
+                    with st.expander(f"About {predicted_label} (matched to {found})"):
+                        st.markdown(info.get("description", "No description available."))
+                else:
+                    st.info("No detailed description found for this label.")
