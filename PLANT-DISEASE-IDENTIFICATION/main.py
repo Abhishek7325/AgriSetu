@@ -14,9 +14,18 @@ st.sidebar.title("AgriSens")
 app_mode = st.sidebar.selectbox("Select Page",["HOME","DISEASE RECOGNITION"])
 #app_mode = st.sidebar.selectbox("Select Page",["Home","About","Disease Recognition"])
 
-# import Image from pillow to open images
 from PIL import Image
-img = Image.open("Diseases.png")
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent   # folder where main.py is located
+IMG_PATH = BASE_DIR / "Diseases.png"         # image must be in same folder
+
+# optional safety check
+if not IMG_PATH.exists():
+    print("❌ ERROR: Not found:", IMG_PATH)
+
+img = Image.open(IMG_PATH)
+
 
 # display image using streamlit
 # width is used to set the width of an image
@@ -54,3 +63,4 @@ elif(app_mode=="DISEASE RECOGNITION"):
                       'Tomato___healthy']
 
         st.success("Model is Predicting it's a {}".format(class_name[result_index]))
+
