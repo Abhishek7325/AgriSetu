@@ -59,7 +59,7 @@ normalized_index = { normalize_label(k): k for k in disease_info.keys() }
 #           STREAMLIT APP USER INTERFACE
 # =====================================================
 
-st.sidebar.title("AgriSens")
+st.sidebar.title("AgriSetu")
 app_mode = st.sidebar.selectbox("Select Page", ["HOME", "DISEASE RECOGNITION"])
 
 # Show header image
@@ -171,3 +171,4 @@ elif app_mode == "DISEASE RECOGNITION":
                         st.markdown(info.get("description", "No description available."))
                 else:
                     st.info("No detailed description found for this label.")
+
